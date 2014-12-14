@@ -87,7 +87,27 @@ function httpModuleRequest(uri, callback) {
             callback(thisResponse);
         }
 
-        thisResponse.emit('data', interceptedUris[uri].response);
+        var response = interceptedUris[uri].response;
+
+        if(typeof(response) === 'object') {
+            /*
+            The response is an object which consists of
+            a function to invoke with a provide context
+            and parameters. Example response object:
+                response: {
+                      fcn: sim.mock,
+                      context: sim,
+                      params: {}
+                }
+            */
+            var result = response.fcn.call(response.context, response.params);
+            
+            thisResponse.emit('data', result);
+        } else {
+            // Assume a string
+            thisResponse.emit('data', interceptedUris[uri].response);   
+        }
+        
         thisResponse.emit('end');
         thisResponse.emit('close');
 
